@@ -1,89 +1,80 @@
-/*
-    The rules are simple, the computer randomly picks a movie title, and shows you how many
-    letters  it's made up of. Your goal is to try to figure out the movie by guessing one letter
-    at a time.
-
-    If a letter is indeed in the title the computer will reveal its correct position in the word, if
-not, you lose a point. If you lose 10 points, game over!
-
-    BUT the more correct letters you guess the more obvious the movie becomes and at a certain point
-you should be able to figure it out.
-
-The program will randomly pick a movie title from a text file that contains a large list of movies.
-Once the computer picks a random title, it will display underscores "_" in place of the real
-letters, thereby only giving away the number of letters in the movie title.
-
-Steps:
-    1. Initialize a list of word to guess
-    2. Choose a random word from the hidden list, show the hidden word with each character is
-    replaced with underscore.
-    3. Receive user input, user input one character at a time
-            + If correct, show the word with the correct character in the corresponding position
-            + If incorrect, show the hidden word
-    4. After each input, update the state of user(number of wrong , a list of all the
-    wrong letters)
-    5. When user have guessed all the character before 10 attempts, congrat and end the game.
-    Otherwise, display lost message.
- */
 import java.util.Scanner;
-import java.util.Random;
 import java.util.HashSet;
-public class GuessTheWord {
-    public static void main(String[] args){
-        Scanner sc = new Scanner(System.in);
-        String[] wordBank = {"handle", "meal", "fly", "chicken", "cat", "band", "intentional",
-                "butter"};
-
-        //Choose a random word from the word bank.
-        Random rand = new Random();
-        int wordIndex = rand.nextInt(wordBank.length);
-        String word = wordBank[wordIndex];
-        StringBuilder hiddenWord = new StringBuilder("");
-        int wordLength = word.length();
-        //Initialize the hidden word
-        for(int i = 0; i < word.length(); i++){
-            hiddenWord.append("_");
+import java.util.Random;
+import java.lang.StringBuilder;
+public class GuessTheWord{
+    public static class Game{
+        private String word;
+        private StringBuilder hiddenWord;
+        private int maximumAttempt;
+        private HashSet<String> wrongLetterList = new HashSet<String>();
+        Game(int maximumAttempt){
+            this.hiddenWord = new StringBuilder();
+            this.maximumAttempt = maximumAttempt;
         }
-        HashSet wrongCharacterList = new HashSet<String>();
-        int attemptCount = 0;
-        int MAXIMUM_ATTEMPT = 10;
-        while(attemptCount <  MAXIMUM_ATTEMPT && !hiddenWord.toString().equals(word)){
-            System.out.println("You are guessing: " + hiddenWord + "(" + wordLength + " " +
-                    "characters)");
-            System.out.println("You have guess" + "(" + wrongCharacterList.size() + ") wrong " +
-                    "letters " + wrongCharacterList.toString());
-            System.out.print("Guess a letter: ");
-
-            //Read user input
-            String guessLetter = sc.next();
-            if(guessLetter.length() != 1){
-                System.out.println("Invalid input!");
-                continue;
+        public void setRandomWord(String[] wordBank){
+            Random rand = new Random();
+            int wordIndex = rand.nextInt(wordBank.length);
+            word = wordBank[wordIndex];
+        }
+        public String getRandomWord(){
+            return this.word;
+        }
+        public void initializingHiddenWord(String word){
+            for(int i = 0; i < word.length(); i++){
+                hiddenWord.append("_");
             }
-
-            //Check if letter input by user match any character of the word
-            boolean characterExist = false;
-            for(int i = 0; i < wordLength; i++){
-                if(Character.compare(guessLetter.charAt(0), word.charAt(i)) == 0){
-                    hiddenWord.setCharAt(i, guessLetter.charAt(0));
-                    characterExist = true;
+        }
+        public String getHiddenWord(){
+            return hiddenWord.toString();
+        }
+        public void handleUserInput(String word, char userInput){
+            boolean letterExist = false;
+            for(int i = 0; i < word.length(); i++){
+                if(Character.compare(word.charAt(i), userInput) == 0){
+                    hiddenWord.setCharAt(i, userInput);
+                    letterExist = true;
                 }
             }
-            if(characterExist == true){
-                characterExist = false;
+            if(!letterExist){
+                wrongLetterList.add(Character.toString(userInput));
             }
-            else{
-                wrongCharacterList.add(guessLetter);
-            }
-            attemptCount++;
+            System.out.println("You have guessed ("+ wrongLetterList.size() +") wrong letters: " + wrongLetterList.toString());
         }
-        if(attemptCount == 10 && hiddenWord.equals(word) != true){
-            System.out.println("You lose! Better luck next time.");
+        public void handleSuccess(){
+            System.out.println("The correct word is " + this.word + ". You win!");
+        }
+        public void handleLose(){
+            System.out.println("The correct word is " + this.word + ". You lose! Better luck next" +
+                    " " +
+                    "time");
+        }
+    }
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        Game Game = new Game(10);
+        String[] WORD_BANK = {"hello", "lol", "bitch"};
+
+        //Initializing word
+        Game.setRandomWord(WORD_BANK);
+        Game.initializingHiddenWord(Game.getRandomWord());
+
+        System.out.println("You are playing Guess The Word Game!");
+
+        int numOfAttempt = 0;
+        while(numOfAttempt < Game.maximumAttempt && !(Game.getHiddenWord().equals(Game.getRandomWord()))){
+            System.out.println("You are guessing: " + Game.getHiddenWord().toString());
+            System.out.print("Guess a letter: ");
+            Game.handleUserInput(Game.getRandomWord(), sc.nextLine().charAt(0));
+            numOfAttempt++;
+        }
+        if(Game.getHiddenWord().equals(Game.getRandomWord())){
+            Game.handleSuccess();
         }
         else{
-            System.out.println("You win. Congrats!");
+            if(numOfAttempt == Game.maximumAttempt){
+                Game.handleLose();
+            }
         }
-        System.out.println("The correct word is: "+ word);
     }
-
 }
